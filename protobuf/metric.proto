@@ -1,0 +1,15 @@
+syntax = "proto2";
+package metrics;
+option csharp_namespace = "Statsd.Protobuf.Metrics";
+option go_package = "github.com/prometheus/statsd_exporter/pkg/protobufmessage";
+
+message TraceMetric {
+  required string Type = 1;
+  required string Name = 2;
+  required double Value = 3;
+  message Tag {
+    required string name = 1;
+    required string value = 2;
+  }
+  repeated Tag Tags = 4;
+}

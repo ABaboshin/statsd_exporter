@@ -207,8 +207,8 @@ mappings:
     provider: "$1"
 ```
 
-Be aware about yaml escape rules as a mapping like the following one will not work. 
-```yaml 
+Be aware about yaml escape rules as a mapping like the following one will not work.
+```yaml
 mappings:
 - match: "test\.(\w+)\.(\w+)\.counter"
   match_type: regex
@@ -482,3 +482,6 @@ We encourage re-use of these packages and welcome [issues](https://github.com/pr
 [circleci]: https://circleci.com/gh/prometheus/statsd_exporter
 [quay]: https://quay.io/repository/prometheus/statsd-exporter
 [hub]: https://hub.docker.com/r/prom/statsd-exporter/
+
+# protobuf
+C:\tools\protoc\bin\protoc.exe --go_out=pkg/protobufmessage --proto_path=D:\playground\statsd_exporter\protobuf\  D:\playground\statsd_exporter\protobuf\metric.proto
