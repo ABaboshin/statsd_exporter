@@ -14,7 +14,7 @@
 package listener
 
 import (
-	"bufio"
+	"bytes"
 	"io"
 	"net"
 	"os"
@@ -22,9 +22,11 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	"github.com/golang/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/statsd_exporter/pkg/event"
 	pkgLine "github.com/prometheus/statsd_exporter/pkg/line"
+	protobufmessage "github.com/prometheus/statsd_exporter/pkg/protobufmessage"
 )
 
 type StatsDUDPListener struct {
@@ -110,24 +112,17 @@ func (l *StatsDTCPListener) HandleConn(c *net.TCPConn) {
 
 	l.TCPConnections.Inc()
 
-	r := bufio.NewReader(c)
-	for {
-		line, isPrefix, err := r.ReadLine()
-		if err != nil {
-			if err != io.EOF {
-				l.TCPErrors.Inc()
-				level.Debug(l.Logger).Log("msg", "Read failed", "addr", c.RemoteAddr(), "error", err)
-			}
-			break
-		}
-		if isPrefix {
-			l.TCPLineTooLong.Inc()
-			level.Debug(l.Logger).Log("msg", "Read failed: line too long", "addr", c.RemoteAddr())
-			break
-		}
-		l.LinesReceived.Inc()
-		l.EventHandler.Queue(pkgLine.LineToEvents(string(line), l.SampleErrors, l.SamplesReceived, l.TagErrors, l.TagsReceived, l.Logger))
+	var buf bytes.Buffer
+	io.Copy(&buf, c)
+	level.Error(l.Logger).Log("msg", "Read", "addr", c.RemoteAddr(), "buf.Len()", buf.Len())
+	message := &protobufmessage.TraceMetric{}
+	err := proto.Unmarshal(buf.Bytes(), message)
+	if err != nil {
+		return
 	}
+
+	l.EventHandler.Queue(protobufmessage.MessageToEvent(*message))
+	l.LinesReceived.Inc()
 }
 
 type StatsDUnixgramListener struct {
